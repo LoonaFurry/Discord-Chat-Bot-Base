@@ -21,7 +21,7 @@ model = T5ForConditionalGeneration.from_pretrained('bigscience/T0_3B').to(device
 
 # Set up the model generation parameters
 max_length = 2048
-temperature = 50
+temperature = 1000
 repetition_penalty = 1.0
 num_beams = 5
 no_repeat_ngram_size = 3
