@@ -14,9 +14,9 @@ else:
     device = torch.device("cpu")
 
 # Set up the T5 model and tokenizer
-# If You Want To Use larger Model You Can Change Model In Example:google/flan-t5-large Lines To google/flan-t5-xl Or google/flan-t5-xxl But Remember It's Need More Computer Power To Run!
-tokenizer = T5Tokenizer.from_pretrained('google/flan-t5-large')
-model = T5ForConditionalGeneration.from_pretrained('google/flan-t5-large').to(device)
+# If You Want To Use larger Model You Can Change Model In Example:google/flan-t5-large Lines To google/flan-t5-xl Or google/flan-t5-xxl Or You Can Use Different Model But Remember Larger Models Need More Computer Power To Run!
+tokenizer = T5Tokenizer.from_pretrained('bigscience/T0_3B')
+model = T5ForConditionalGeneration.from_pretrained('bigscience/T0_3B').to(device)
 
 # Set up the model generation parameters
 max_length = 2048
