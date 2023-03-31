@@ -13,11 +13,13 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-# Set up the T5 model and tokenizer
-# If You Want To Use larger Model You Can Change Model In Example:bigscience/T0_3B To bigscience/T0p Or bigscience/T0
-# Or You Can Use Different Model But Remember Larger Models Need More Computer Power To Run!
+# Set up the Bigscience model and tokenizer
 tokenizer = T5Tokenizer.from_pretrained('bigscience/T0_3B')
 model = T5ForConditionalGeneration.from_pretrained('bigscience/T0_3B').to(device)
+
+# Set up the Roberta model and tokenizer For Swear And Hate Speech Detection If This System Detect Swear And Hate Speech To Bot This Will Give a Warning To The User
+hate_speech_model = RobertaForSequenceClassification.from_pretrained('facebook/roberta-hate-speech-dynabench-r4-target')
+hate_speech_tokenizer = RobertaTokenizer.from_pretrained('facebook/roberta-hate-speech-dynabench-r4-target')
 
 # Set up the model generation parameters
 max_length = 2048
@@ -39,10 +41,32 @@ try:
 except FileNotFoundError:
     pass
 
+# Function to detect hate speech
+def detect_hate_speech(input_text):
+    # Tokenize the input text
+    input_ids = hate_speech_tokenizer.encode(input_text, return_tensors="pt").to(device)
+
+    # Set the attention mask to 1 for all input tokens
+    attention_mask = torch.ones_like(input_ids)
+
+    # Classify the input text using Roberta
+    outputs = hate_speech_model(input_ids=input_ids, attention_mask=attention_mask)
+
+    # Get the predicted label
+    predicted_label = outputs.logits.argmax().item()
+
+    return predicted_label
+
 # Function to generate a response from the chatbot
 async def generate_response(user, input_text):
     # Remove the user's mention from the input text
     input_text = re.sub(r"<@\!?\d+>", "", input_text).strip()
+
+    # Check if the input text contains hate speech
+    hate_speech_label = detect_hate_speech(input_text)
+    if hate_speech_label == 1:
+        response = "I'm sorry, I cannot respond to this message as it contains hate speech or swear words."
+        return f"{user.mention}: {response}"
 
     # Add the user's mention to the context
     context = f"{user.name}: "
@@ -53,7 +77,7 @@ async def generate_response(user, input_text):
     # Set the attention mask to 1 for all input tokens
     attention_mask = torch.ones_like(input_ids)
 
-    # Generate a response using T5
+    # Generate a response using Blenderbot
     output = model.generate(
         input_ids=input_ids,
         attention_mask=attention_mask,
@@ -109,4 +133,4 @@ async def on_message(message):
     await handle_message(message)
 
 # Run the bot with your Discord bot token
-client.run("your discord token")
+client.run("Your Discord Bot Token Here")
