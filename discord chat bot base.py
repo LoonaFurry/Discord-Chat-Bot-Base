@@ -2,7 +2,8 @@ import discord
 import torch
 import re
 import datetime
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+from transformers import T5Tokenizer, T5ForConditionalGeneration, RobertaForSequenceClassification, RobertaTokenizer
+from discord.ext import commands
 
 # Set up the Discord client
 client = discord.Client(intents=discord.Intents.default())
@@ -13,11 +14,11 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-# Set up the Bigscience model and tokenizer
+# Set up the T5 model and tokenizer
 tokenizer = T5Tokenizer.from_pretrained('bigscience/T0_3B')
 model = T5ForConditionalGeneration.from_pretrained('bigscience/T0_3B').to(device)
 
-# Set up the Roberta model and tokenizer For Swear And Hate Speech Detection If This System Detect Swear And Hate Speech To Bot This Will Give a Warning To The User
+# Set up the Roberta model and tokenizer for Swear And Hate Speech Detection
 hate_speech_model = RobertaForSequenceClassification.from_pretrained('facebook/roberta-hate-speech-dynabench-r4-target')
 hate_speech_tokenizer = RobertaTokenizer.from_pretrained('facebook/roberta-hate-speech-dynabench-r4-target')
 
@@ -77,7 +78,7 @@ async def generate_response(user, input_text):
     # Set the attention mask to 1 for all input tokens
     attention_mask = torch.ones_like(input_ids)
 
-    # Generate a response using Blenderbot
+    # Generate a response using T5
     output = model.generate(
         input_ids=input_ids,
         attention_mask=attention_mask,
@@ -121,16 +122,23 @@ async def handle_message(message):
         # Send the response to the channel
         await message.channel.send(response)
 
-# Function to handle bot startup
+# Event handler for bot startup
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user}")
+
+    # Set the bot's activity and status
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name="English Chat Bot | Practice English"
+    )
+    await client.change_presence(activity=activity, status=discord.Status.online)
 
 # Function to handle incoming messages
 @client.event
 async def on_message(message):
     # Handle the message
     await handle_message(message)
-
+    
 # Run the bot with your Discord bot token
 client.run("Your Discord Bot Token Here")
